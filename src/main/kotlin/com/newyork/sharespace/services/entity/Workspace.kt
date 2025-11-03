@@ -1,17 +1,8 @@
 package com.newyork.sharespace.services.entity
 
-import jakarta.persistence.CollectionTable
-import jakarta.persistence.Column
-import jakarta.persistence.ElementCollection
-import jakarta.persistence.Entity
-import jakarta.persistence.EnumType
-import jakarta.persistence.Enumerated
-import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
-import jakarta.persistence.Table
+import jakarta.persistence.*
 import java.time.LocalDateTime
-import java.util.UUID
-
+import java.util.*
 
 
 @Entity
@@ -55,7 +46,8 @@ data class Workspace(
     val reviews: String?,
 
     @Column(nullable = true)
-    val rateId: UUID?,
+    val rating: Double? = null,
+
 
     @Column(name = "reviews_count", nullable = true)
     val reviewsNo: Int?,
