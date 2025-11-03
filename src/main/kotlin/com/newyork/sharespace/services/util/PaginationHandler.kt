@@ -1,13 +1,12 @@
 package com.newyork.sharespace.services.util
 
-import com.newyork.sharespace.services.entity.Workspace
 import org.springframework.data.domain.*
 
-fun paginate(list: List<Workspace>, pageable: Pageable): Page<Workspace> {
+fun <T> paginate(list: List<T>, pageable: Pageable): Page<T> {
     val start = pageable.offset.toInt()
-    val end = (start + pageable.pageSize).coerceAtMost(list.size)
-    val content = if (start <= end) list.subList(start, end) else emptyList()
-    return PageImpl(content, pageable, list.size.toLong())
+    val end = minOf(start + pageable.pageSize, list.size)
+    val pageContent = if (start <= end) list.subList(start, end) else emptyList()
+    return PageImpl(pageContent, pageable, list.size.toLong())
 }
 
 fun buildPageable(
