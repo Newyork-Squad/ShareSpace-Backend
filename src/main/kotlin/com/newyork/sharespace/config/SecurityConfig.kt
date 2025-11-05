@@ -15,7 +15,13 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 class SecurityConfig(
     private val jwtAuthFilter: JwtAuthFilter
 ) {
-
+    private val SWAGGER_WHITELIST = arrayOf(
+        "/v3/api-docs/**",
+        "/swagger-ui/**",
+        "/swagger-ui.html",
+        "/swagger-resources/**",
+        "/webjars/**"
+    )
     @Bean
     fun filterChain(httpSecurity: HttpSecurity): SecurityFilterChain {
         return httpSecurity
@@ -24,6 +30,8 @@ class SecurityConfig(
             .authorizeHttpRequests { auth ->
                 auth
                     .requestMatchers("/api/auth/**")
+                    .permitAll()
+                    .requestMatchers(*SWAGGER_WHITELIST)
                     .permitAll()
                     .dispatcherTypeMatchers(
                         DispatcherType.ERROR,
