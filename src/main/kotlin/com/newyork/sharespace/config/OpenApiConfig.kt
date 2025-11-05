@@ -1,4 +1,4 @@
-package com.newyork.sharespace.config // <-- Use your package name
+package com.newyork.sharespace.config
 
 import io.swagger.v3.oas.annotations.OpenAPIDefinition
 import io.swagger.v3.oas.annotations.info.Info
