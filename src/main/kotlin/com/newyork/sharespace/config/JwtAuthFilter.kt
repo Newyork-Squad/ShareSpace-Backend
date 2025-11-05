@@ -13,7 +13,23 @@ import org.springframework.web.filter.OncePerRequestFilter
 class JwtAuthFilter(
     private val jwtService: JwtService
 ) : OncePerRequestFilter() {
+    private val BYPASS_URLS = arrayOf(
+        "/api/auth/**",
 
+        "/v3/api-docs",
+        "/v3/api-docs.yaml",
+        "/v3/api-docs/*",
+        "/swagger-ui/**",
+        "/swagger-ui.html",
+        "/swagger/**",
+        "/swagger-resources/**",
+        "/webjars/**"
+    )
+    override fun shouldNotFilter(request: HttpServletRequest): Boolean {
+        return BYPASS_URLS.any { path ->
+            request.requestURI.startsWith(path.removeSuffix("**"))
+        }
+    }
     override fun doFilterInternal(
         request: HttpServletRequest,
         response: HttpServletResponse,
