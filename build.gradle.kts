@@ -35,10 +35,7 @@ dependencies {
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
 	//swagger
-	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0") {
-		exclude(group = "org.springframework", module = "spring-web")
-		exclude(group = "org.springframework", module = "spring-webmvc")
-	}
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
 
 
 	//jwt
