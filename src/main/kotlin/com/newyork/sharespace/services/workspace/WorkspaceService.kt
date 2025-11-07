@@ -1,5 +1,7 @@
 package com.newyork.sharespace.services.workspace
 
+import com.newyork.sharespace.api.dto.AddWorkspaceRequest
+import com.newyork.sharespace.api.dto.workspace.toWorkspaceEntity
 import com.newyork.sharespace.repository.WorkspaceRepository
 import com.newyork.sharespace.services.entity.Workspace
 import com.newyork.sharespace.services.util.calculateDistanceInKm
@@ -38,6 +40,10 @@ class WorkspaceService(private val workspaceRepository: WorkspaceRepository) {
         return paginate(sortedByDistance, pageable)
     }
 
+    fun addWorkspace(request: AddWorkspaceRequest): Workspace {
+        val workspaceEntity = request.toWorkspaceEntity()
+        return workspaceRepository.save(workspaceEntity)
+    }
 
     private companion object {
         const val Popular = "popular"

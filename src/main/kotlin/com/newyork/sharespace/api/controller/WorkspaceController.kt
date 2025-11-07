@@ -1,11 +1,14 @@
 package com.newyork.sharespace.api.controller
 
+import com.newyork.sharespace.api.dto.AddWorkspaceRequest
 import com.newyork.sharespace.api.dto.workspace.WorkspaceResponse
 import com.newyork.sharespace.api.dto.workspace.toWorkspaceResponse
 import com.newyork.sharespace.config.exceptionHandling.ApiResponse
 import com.newyork.sharespace.services.util.buildPageable
 import com.newyork.sharespace.services.workspace.WorkspaceService
+import jakarta.validation.Valid
 import org.springframework.data.domain.Page
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*
@@ -25,16 +28,6 @@ class WorkspaceController(private val workspaceService: WorkspaceService) {
         val result = workspaceService.getAllWorkspaces(buildPageable(page, size, sortBy, direction))
             .map { it.toWorkspaceResponse() }
         return ResponseEntity.ok(ApiResponse.success(result, "Workspaces retrieved successfully"))
-    }
-
-    @GetMapping("/{id}")
-    fun getById(@PathVariable id: UUID): ResponseEntity<ApiResponse<WorkspaceResponse>> {
-        val workspace = workspaceService.getWorkspaceById(id)
-        return if (workspace != null) {
-            ResponseEntity.ok(ApiResponse.success(workspace.toWorkspaceResponse(), "Workspace details retrieved"))
-        } else {
-            ResponseEntity.status(404).body(ApiResponse.error("Workspace not found"))
-        }
     }
 
     @GetMapping("/category")
@@ -69,4 +62,24 @@ class WorkspaceController(private val workspaceService: WorkspaceService) {
             .map { it.toWorkspaceResponse() }
         return ResponseEntity.ok(ApiResponse.success(result, "Featured workspaces retrieved"))
     }
+
+    @PostMapping
+    fun addWorkspace(
+        @Valid @RequestBody workspaceRequest: AddWorkspaceRequest
+    ): ResponseEntity<ApiResponse<WorkspaceResponse>> {
+        val newWorkspace = workspaceService.addWorkspace(workspaceRequest)
+        return ResponseEntity
+            .status(HttpStatus.CREATED)
+            .body(ApiResponse.success(newWorkspace.toWorkspaceResponse(), "Workspace created successfully"))
+    }
+    @GetMapping("/{id}")
+    fun getById(@PathVariable id: UUID): ResponseEntity<ApiResponse<WorkspaceResponse>> {
+        val workspace = workspaceService.getWorkspaceById(id)
+        return if (workspace != null) {
+            ResponseEntity.ok(ApiResponse.success(workspace.toWorkspaceResponse(), "Workspace details retrieved"))
+        } else {
+            ResponseEntity.status(404).body(ApiResponse.error("Workspace not found"))
+        }
+    }
+
 }
