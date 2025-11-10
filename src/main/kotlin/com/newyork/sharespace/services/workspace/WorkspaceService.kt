@@ -45,6 +45,7 @@ class WorkspaceService(private val workspaceRepository: WorkspaceRepository) {
         return workspaceRepository.save(workspaceEntity)
     }
 
+
     private companion object {
         const val Popular = "popular"
         const val TopRated = "top_rated"
