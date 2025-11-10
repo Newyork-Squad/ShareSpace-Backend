@@ -8,6 +8,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
+import java.util.*
 
 @Component
 class JwtAuthFilter(
@@ -25,11 +26,13 @@ class JwtAuthFilter(
         "/swagger-resources/**",
         "/webjars/**"
     )
+
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
         return BYPASS_URLS.any { path ->
             request.requestURI.startsWith(path.removeSuffix("**"))
         }
     }
+
     override fun doFilterInternal(
         request: HttpServletRequest,
         response: HttpServletResponse,
@@ -45,5 +48,16 @@ class JwtAuthFilter(
         }
 
         filterChain.doFilter(request, response)
+    }
+
+    companion object {
+        fun getUserId(): UUID? {
+            val principal = SecurityContextHolder.getContext().authentication?.principal ?: return null
+            return try {
+                UUID.fromString(principal.toString())
+            } catch (e: IllegalArgumentException) {
+                null
+            }
+        }
     }
 }
