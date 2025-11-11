@@ -79,6 +79,22 @@ class WorkspaceController(
             .body(ApiResponse.success(newWorkspace.toWorkspaceResponse(), "Workspace created successfully"))
     }
 
+    @DeleteMapping("/{id}")
+    fun deleteWorkspace(@PathVariable id: UUID): ResponseEntity<ApiResponse<String>> {
+        val userId = JwtAuthFilter.getUserId()
+            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error("User not authenticated"))
+        val workspace = workspaceService.getWorkspaceById(id)
+            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error("Workspace with ID $id not found"))
+        if (workspace.owner != userId) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error("You are not authorized to delete this workspace"))
+        }
+        workspaceService.deleteWorkspace(id)
+        return ResponseEntity.ok(ApiResponse.success(message = "Workspace deleted successfully"))
+    }
+
     @GetMapping("/{id}")
     fun getById(@PathVariable id: UUID): ResponseEntity<ApiResponse<WorkspaceResponse>> {
         val workspace = workspaceService.getWorkspaceById(id)

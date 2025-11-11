@@ -44,6 +44,12 @@ class WorkspaceService(private val workspaceRepository: WorkspaceRepository) {
         val workspaceEntity = request.toWorkspaceEntity()
         return workspaceRepository.save(workspaceEntity)
     }
+    fun deleteWorkspace(id: UUID) {
+        if (!workspaceRepository.existsById(id)) {
+            throw NoSuchElementException("Workspace with ID $id not found")
+        }
+        workspaceRepository.deleteById(id)
+    }
 
 
     private companion object {
