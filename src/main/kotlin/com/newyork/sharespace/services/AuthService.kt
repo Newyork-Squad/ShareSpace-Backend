@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatusCode
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.server.ResponseStatusException
 import java.security.MessageDigest
 import java.time.LocalDateTime
@@ -23,6 +24,7 @@ import java.util.*
 @Service
 class AuthService(
     private val jwtService: JwtService,
+    private val userService: UserService,
     private val userRepository: UserRepository,
     private val hashEncoder: HashEncoder,
     private val refreshTokenRepository: RefreshTokenRepository
@@ -31,6 +33,7 @@ class AuthService(
 
     fun register(
         request: RegisterRequest,
+        file: MultipartFile?
     ): User {
         userRepository.findByEmail(request.email.trim())?.let {
             throw ResponseStatusException(HttpStatus.CONFLICT, "A user with that email already exists.")
@@ -51,6 +54,11 @@ class AuthService(
             )
         }
 
+        var finalImageUrl: String? = null
+        if (file != null && !file.isEmpty) {
+            finalImageUrl = userService.uploadImage(file, request.phoneNumber)
+        }
+
         val hashed = hashEncoder.encode(request.password)
 
         val user = User(
@@ -59,7 +67,7 @@ class AuthService(
             name = request.name,
             phoneNumber = request.phoneNumber,
             gender = genderEnum,
-            imageUrl = request.imageUrl,
+            imageUrl = finalImageUrl,
             bio = request.bio
         )
 
