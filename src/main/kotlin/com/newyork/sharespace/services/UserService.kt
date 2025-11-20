@@ -1,9 +1,9 @@
 package com.newyork.sharespace.services
 
 import com.newyork.sharespace.api.dto.ImageUploadResponse
+import com.newyork.sharespace.api.dto.UserUpdateRequest
 import com.newyork.sharespace.repository.UserRepository
 import com.newyork.sharespace.services.entity.User
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.ByteArrayResource
 import org.springframework.http.HttpEntity
@@ -15,8 +15,7 @@ import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.multipart.MultipartFile
-import java.util.UUID
-import kotlin.jvm.java
+import java.util.*
 
 @Service
 class UserService(
@@ -61,6 +60,22 @@ class UserService(
             null
         }
 
-}
+    }
+
+    fun updateUserInfo(userId: UUID, userUpdateRequest: UserUpdateRequest): User? {
+        val user = userRepository.findById(userId).orElse(null) ?: return null
+
+        val updatedUser = user.copy(
+            name = userUpdateRequest.name ?: user.name,
+            email = userUpdateRequest.email ?: user.email,
+            phoneNumber = userUpdateRequest.phoneNumber ?: user.phoneNumber,
+            gender = userUpdateRequest.gender ?: user.gender,
+            bio = userUpdateRequest.bio ?: user.bio,
+            imageUrl = userUpdateRequest.imageUrl ?: user.imageUrl
+        )
+
+        return userRepository.save(updatedUser)
+    }
+
 
 }
