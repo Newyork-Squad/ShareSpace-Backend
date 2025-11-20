@@ -1,6 +1,7 @@
 package com.newyork.sharespace.services
 
 import com.newyork.sharespace.api.dto.AuthResponse
+import com.newyork.sharespace.api.dto.ChangePasswordRequest
 import com.newyork.sharespace.api.dto.LoginRequest
 import com.newyork.sharespace.api.dto.RegisterRequest
 import com.newyork.sharespace.config.HashEncoder
@@ -20,6 +21,7 @@ import java.security.MessageDigest
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.*
+import kotlin.text.matches
 
 @Service
 class AuthService(
@@ -143,4 +145,22 @@ class AuthService(
         val hashBytes = digest.digest(token.encodeToByteArray())
         return Base64.getEncoder().encodeToString(hashBytes)
     }
+
+    fun changePassword(userId: UUID, request: ChangePasswordRequest) {
+
+        val user = userRepository.findById(userId).orElseThrow {
+            ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")
+        }
+
+        if (!hashEncoder.matches(request.oldPassword, user.password)) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Old password is incorrect")
+        }
+
+        val hashedNewPassword = hashEncoder.encode(request.newPassword)
+
+        val updatedUser = user.copy(password = hashedNewPassword)
+
+        userRepository.save(updatedUser)
+    }
+
 }
