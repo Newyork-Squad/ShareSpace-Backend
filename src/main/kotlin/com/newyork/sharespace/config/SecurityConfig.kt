@@ -23,6 +23,11 @@ class SecurityConfig(
         "/swagger-resources/**",
         "/webjars/**"
     )
+
+    private val PUBLIC_ENDPOINTS = arrayOf(
+        "/api/auth/**",
+    )
+
     @Bean
     fun filterChain(httpSecurity: HttpSecurity): SecurityFilterChain {
         return httpSecurity
@@ -30,17 +35,14 @@ class SecurityConfig(
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { auth ->
                 auth
-                    .requestMatchers("/api/auth/**")
-                    .permitAll()
-                    .requestMatchers(*SWAGGER_WHITELIST)
-                    .permitAll()
+                    // Allow Swagger without authentication
+                    .requestMatchers(*SWAGGER_WHITELIST).permitAll()
+                    .requestMatchers(*PUBLIC_ENDPOINTS).permitAll()
                     .dispatcherTypeMatchers(
                         DispatcherType.ERROR,
                         DispatcherType.FORWARD
-                    )
-                    .permitAll()
-                    .anyRequest()
-                    .authenticated()
+                    ).permitAll()
+                    .anyRequest().authenticated()
             }
             .exceptionHandling { configurer ->
                 configurer
