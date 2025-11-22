@@ -157,9 +157,18 @@ class WorkspaceController(
         val userId = JwtAuthFilter.getUserId()
             ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ApiResponse.error("User not authenticated"))
+
+        val existingReview = reviewService.getReviewByUserAndWorkspace(userId, request.workspaceId)
+        if (existingReview != null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("You have already submitted a review for this workspace"))
+        }
+
         val review = reviewService.addReview(userId, request)
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(review, "Review added successfully"))
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(ApiResponse.success(review, "Review added successfully"))
     }
+
 
     @GetMapping("/{workspaceId}/reviews")
     fun getReviews(
