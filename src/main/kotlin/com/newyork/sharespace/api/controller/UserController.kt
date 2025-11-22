@@ -1,12 +1,15 @@
 package com.newyork.sharespace.api.controller
 
+import com.newyork.sharespace.api.dto.ChangePasswordRequest
 import com.newyork.sharespace.api.dto.UserResponse
 import com.newyork.sharespace.api.dto.UserUpdateRequest
 import com.newyork.sharespace.api.dto.toUserResponse
 import com.newyork.sharespace.config.JwtAuthFilter
 import com.newyork.sharespace.config.exceptionHandling.ApiResponse
 import com.newyork.sharespace.repository.UserRepository
+import com.newyork.sharespace.services.AuthService
 import com.newyork.sharespace.services.UserService
+import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -19,6 +22,7 @@ import org.springframework.web.server.ResponseStatusException
 @CrossOrigin(origins = ["*"])
 class UserController(
     private val userService: UserService,
+    private val authService: AuthService,
     private val userRepository: UserRepository
 ) {
 
@@ -89,5 +93,24 @@ class UserController(
             )
         )
     }
+
+    @PostMapping("/change-password")
+    fun changePassword(
+        @Valid @RequestBody body: ChangePasswordRequest
+    ): ResponseEntity<ApiResponse<String>> {
+
+        val userId = JwtAuthFilter.getUserId()
+            ?: return ResponseEntity.status(401).body(ApiResponse.error("User not authenticated"))
+
+        authService.changePassword(userId, body)
+
+        return ResponseEntity.ok(
+            ApiResponse.success(
+                data = "Password updated successfully",
+                message = "Password updated successfully"
+            )
+        )
+    }
+
 
 }
