@@ -1,21 +1,19 @@
 package com.newyork.sharespace.api.controller
 
+import com.newyork.sharespace.api.dto.ChangePasswordRequest
 import com.newyork.sharespace.api.dto.UserResponse
+import com.newyork.sharespace.api.dto.UserUpdateRequest
 import com.newyork.sharespace.api.dto.toUserResponse
 import com.newyork.sharespace.config.JwtAuthFilter
 import com.newyork.sharespace.config.exceptionHandling.ApiResponse
 import com.newyork.sharespace.repository.UserRepository
+import com.newyork.sharespace.services.AuthService
 import com.newyork.sharespace.services.UserService
+import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.security.core.Authentication
-import org.springframework.web.bind.annotation.CrossOrigin
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestPart
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.server.ResponseStatusException
 
@@ -24,8 +22,9 @@ import org.springframework.web.server.ResponseStatusException
 @CrossOrigin(origins = ["*"])
 class UserController(
     private val userService: UserService,
-    private val userRepository : UserRepository
-    ) {
+    private val authService: AuthService,
+    private val userRepository: UserRepository
+) {
 
 
     @GetMapping("/me")
@@ -73,4 +72,45 @@ class UserController(
         )
         return ResponseEntity.ok(response)
     }
+
+    @PostMapping("/me/update")
+    fun updateUser(
+        @RequestBody userUpdateRequest: UserUpdateRequest
+    ): ResponseEntity<ApiResponse<UserResponse>> {
+
+        val userId = JwtAuthFilter.getUserId()
+            ?: return ResponseEntity.status(404)
+                .body(ApiResponse.error("User not found"))
+
+        val updated = userService.updateUserInfo(userId, userUpdateRequest)
+            ?: return ResponseEntity.status(404)
+                .body(ApiResponse.error("User not found"))
+
+        return ResponseEntity.ok(
+            ApiResponse.success(
+                updated.toUserResponse(),
+                "User updated successfully"
+            )
+        )
+    }
+
+    @PostMapping("/change-password")
+    fun changePassword(
+        @Valid @RequestBody body: ChangePasswordRequest
+    ): ResponseEntity<ApiResponse<String>> {
+
+        val userId = JwtAuthFilter.getUserId()
+            ?: return ResponseEntity.status(401).body(ApiResponse.error("User not authenticated"))
+
+        authService.changePassword(userId, body)
+
+        return ResponseEntity.ok(
+            ApiResponse.success(
+                data = "Password updated successfully",
+                message = "Password updated successfully"
+            )
+        )
+    }
+
+
 }
