@@ -1,11 +1,15 @@
 package com.newyork.sharespace.api.controller
 
+import com.newyork.sharespace.api.dto.AddReviewRequest
 import com.newyork.sharespace.api.dto.AddWorkspaceRequest
+import com.newyork.sharespace.api.dto.ReviewResponse
 import com.newyork.sharespace.api.dto.workspace.SavedWorkspaceResponse
 import com.newyork.sharespace.api.dto.workspace.WorkspaceResponse
 import com.newyork.sharespace.api.dto.workspace.toWorkspaceResponse
 import com.newyork.sharespace.config.JwtAuthFilter
 import com.newyork.sharespace.config.exceptionHandling.ApiResponse
+import com.newyork.sharespace.services.WorkspaceRatingService
+import com.newyork.sharespace.services.WorkspaceReviewService
 import com.newyork.sharespace.services.util.buildPageable
 import com.newyork.sharespace.services.workspace.SavedWorkspaceService
 import com.newyork.sharespace.services.workspace.WorkspaceService
@@ -21,7 +25,9 @@ import java.util.*
 @CrossOrigin(origins = ["*"])
 class WorkspaceController(
     private val workspaceService: WorkspaceService,
-    private val savedWorkspaceService: SavedWorkspaceService
+    private val savedWorkspaceService: SavedWorkspaceService,
+    private val ratingService: WorkspaceRatingService,
+    private val reviewService: WorkspaceReviewService
 ) {
 
     @GetMapping("/all")
@@ -137,5 +143,55 @@ class WorkspaceController(
         return ResponseEntity.ok(ApiResponse.success(message = "Workspace removed from saved list"))
     }
 
+    @PostMapping("/{workspaceId}/rate")
+    fun rateWorkspace(@PathVariable workspaceId: UUID, @RequestParam rating: Int): ResponseEntity<ApiResponse<String>> {
+        val userId = JwtAuthFilter.getUserId()
+            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error("User not authenticated"))
+        ratingService.addOrUpdateRating(userId, workspaceId, rating)
+        return ResponseEntity.ok(ApiResponse.success(message = "Rating submitted successfully"))
+    }
+
+    @PostMapping("/review")
+    fun addReview(@RequestBody request: AddReviewRequest): ResponseEntity<ApiResponse<ReviewResponse>> {
+        val userId = JwtAuthFilter.getUserId()
+            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error("User not authenticated"))
+
+        val existingReview = reviewService.getReviewByUserAndWorkspace(userId, request.workspaceId)
+        if (existingReview != null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("You have already submitted a review for this workspace"))
+        }
+
+        val review = reviewService.addReview(userId, request)
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(ApiResponse.success(review, "Review added successfully"))
+    }
+
+
+    @GetMapping("/{workspaceId}/reviews")
+    fun getReviews(
+        @PathVariable workspaceId: UUID,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "10") size: Int
+    ): ResponseEntity<ApiResponse<Page<ReviewResponse>>> {
+        val pageable = buildPageable(page, size)
+        val reviews = reviewService.getReviews(workspaceId, pageable)
+        return ResponseEntity.ok(ApiResponse.success(reviews, "Reviews retrieved successfully"))
+    }
+
+
+    @GetMapping("/{workspaceId}/rating")
+    fun getRating(@PathVariable workspaceId: UUID): ResponseEntity<ApiResponse<Map<String, Any>>> {
+        val average = ratingService.getAverageRating(workspaceId)
+        val count = ratingService.getRatingsCount(workspaceId)
+        return ResponseEntity.ok(
+            ApiResponse.success(
+                mapOf("average" to average, "count" to count),
+                "Rating retrieved successfully"
+            )
+        )
+    }
 
 }
