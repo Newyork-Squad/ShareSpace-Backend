@@ -10,9 +10,18 @@ import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
-class WorkspaceReviewService(private val reviewRepository: WorkspaceReviewRepository) {
+class WorkspaceReviewService(
+    private val reviewRepository: WorkspaceReviewRepository,
+    private val ratingService: WorkspaceRatingService
+) {
 
     fun addReview(userId: UUID, request: AddReviewRequest): ReviewResponse {
+
+        val existingReview = reviewRepository.findByWorkspaceIdAndUserId(request.workspaceId, userId)
+        if (existingReview != null) {
+            throw IllegalStateException("User has already submitted a review for this workspace")
+        }
+
         val review = WorkspaceReview(
             workspaceId = request.workspaceId,
             userId = userId,
@@ -20,6 +29,13 @@ class WorkspaceReviewService(private val reviewRepository: WorkspaceReviewReposi
             comment = request.comment
         )
         val saved = reviewRepository.save(review)
+
+        ratingService.addOrUpdateRating(
+            userId = userId,
+            workspaceId = request.workspaceId,
+            ratingValue = request.rating
+        )
+
         return ReviewResponse(
             id = saved.id,
             userId = saved.userId,
@@ -33,4 +49,9 @@ class WorkspaceReviewService(private val reviewRepository: WorkspaceReviewReposi
         return reviewRepository.findAllByWorkspaceIdOrderByCreatedAtDesc(workspaceId, pageable)
             .map { ReviewResponse(it.id, it.userId, it.rating, it.comment, it.createdAt) }
     }
+
+    fun getReviewByUserAndWorkspace(userId: UUID, workspaceId: UUID): WorkspaceReview? {
+        return reviewRepository.findByWorkspaceIdAndUserId(workspaceId, userId)
+    }
+
 }
