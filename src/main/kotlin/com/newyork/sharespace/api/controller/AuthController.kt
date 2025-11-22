@@ -1,6 +1,9 @@
 package com.newyork.sharespace.api.controller
 
-import com.newyork.sharespace.api.dto.*
+import com.newyork.sharespace.api.dto.AuthResponse
+import com.newyork.sharespace.api.dto.LoginRequest
+import com.newyork.sharespace.api.dto.RefreshRequest
+import com.newyork.sharespace.api.dto.RegisterRequest
 import com.newyork.sharespace.config.exceptionHandling.ApiResponse
 import com.newyork.sharespace.services.AuthService
 import com.newyork.sharespace.services.entity.User
@@ -59,22 +62,5 @@ class AuthController(
         return ResponseEntity.ok(response)
     }
 
-    @PostMapping("/change-password")
-    fun changePassword(
-        @Valid @RequestBody body: ChangePasswordRequest
-    ): ResponseEntity<ApiResponse<String>> {
-
-        val userId = com.newyork.sharespace.config.JwtAuthFilter.getUserId()
-            ?: return ResponseEntity.status(401).body(ApiResponse.error("User not authenticated"))
-
-        authService.changePassword(userId, body)
-
-        return ResponseEntity.ok(
-            ApiResponse.success(
-                data = "Password updated successfully",
-                message = "Password updated successfully"
-            )
-        )
-    }
 
 }
