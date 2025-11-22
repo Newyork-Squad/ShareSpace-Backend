@@ -4,11 +4,15 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
 import java.time.LocalDateTime
 import java.util.*
 
 @Entity
-@Table(name = "workspace_reviews")
+@Table(
+    name = "workspace_reviews",
+    uniqueConstraints = [UniqueConstraint(columnNames = ["workspace_id", "user_id"])]
+)
 data class WorkspaceReview(
     @Id
     @Column(columnDefinition = "uuid", updatable = false, nullable = false)
