@@ -36,9 +36,10 @@ class AuthController(
 
     @PostMapping("/login")
     fun login(
-        @Valid @RequestBody body: LoginRequest
+        @Valid @RequestBody body: LoginRequest,
+        @RequestHeader(value = "FCM-Token", required = false) fcmToken: String?
     ): ResponseEntity<ApiResponse<AuthResponse>> {
-        val authResponse = authService.login(body)
+        val authResponse = authService.login(body,fcmToken)
 
         val response = ApiResponse.success(
             data = authResponse,

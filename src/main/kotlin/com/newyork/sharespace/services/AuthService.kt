@@ -21,7 +21,6 @@ import java.security.MessageDigest
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.*
-import kotlin.text.matches
 
 @Service
 class AuthService(
@@ -76,12 +75,17 @@ class AuthService(
         return userRepository.save(user)
     }
 
-    fun login(request: LoginRequest): AuthResponse {
+    fun login(request: LoginRequest, fcmToken: String?): AuthResponse {
         val user = userRepository.findByPhoneNumber(request.phoneNumber)
             ?: throw BadCredentialsException("Invalid credentials.")
 
         if (!hashEncoder.matches(request.password, user.password)) {
             throw BadCredentialsException("Invalid credentials.")
+        }
+
+        if (!fcmToken.isNullOrBlank()) {
+            val updatedUser = user.copy(fcmToken = fcmToken)
+            userRepository.save(updatedUser)
         }
 
         val newAccessToken = jwtService.generateAccessToken(user.id.toString())
