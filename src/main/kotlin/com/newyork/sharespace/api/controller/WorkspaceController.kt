@@ -3,6 +3,7 @@ package com.newyork.sharespace.api.controller
 import com.newyork.sharespace.api.dto.AddWorkspaceRequest
 import com.newyork.sharespace.api.dto.workspace.SavedWorkspaceResponse
 import com.newyork.sharespace.api.dto.workspace.WorkspaceResponse
+import com.newyork.sharespace.api.dto.workspace.WorkspaceSearchRequest
 import com.newyork.sharespace.api.dto.workspace.toWorkspaceResponse
 import com.newyork.sharespace.config.JwtAuthFilter
 import com.newyork.sharespace.config.exceptionHandling.ApiResponse
@@ -11,6 +12,7 @@ import com.newyork.sharespace.services.workspace.SavedWorkspaceService
 import com.newyork.sharespace.services.workspace.WorkspaceService
 import jakarta.validation.Valid
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -135,6 +137,30 @@ class WorkspaceController(
             ?: throw IllegalStateException("User not authenticated")
         savedWorkspaceService.removeSavedWorkspace(userId, workspaceId)
         return ResponseEntity.ok(ApiResponse.success(message = "Workspace removed from saved list"))
+    }
+
+
+    @PostMapping("/search")
+    fun searchWorkspaces(
+        @RequestBody request: WorkspaceSearchRequest,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "10") size: Int
+    ): ResponseEntity<ApiResponse<Page<WorkspaceResponse>>> {
+        val pageable = buildPageable(page = page, size = size)
+        val result = workspaceService.searchWorkspaces(request, pageable)
+            .map { it.toWorkspaceResponse() }
+        return ResponseEntity.ok(ApiResponse.success(result, "Search results retrieved successfully"))
+    }
+
+    @GetMapping("/suggestions")
+    fun getSuggestions(@RequestParam keyword: String): ResponseEntity<ApiResponse<List<String>>> {
+        val suggestions = workspaceService.getAllWorkspaces(Pageable.unpaged())
+            .content
+            .map { it.title }
+            .filter { it.contains(keyword, ignoreCase = true) }
+            .distinct()
+            .take(5)
+        return ResponseEntity.ok(ApiResponse.success(suggestions, "Suggestions retrieved"))
     }
 
 
