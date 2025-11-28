@@ -16,7 +16,7 @@ class JwtAuthFilter(
 ) : OncePerRequestFilter() {
     private val BYPASS_URLS = arrayOf(
         "/api/auth/**",
-
+        "/api/payments/token",
         "/v3/api-docs",
         "/v3/api-docs.yaml",
         "/v3/api-docs/*",
