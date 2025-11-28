@@ -1,6 +1,7 @@
 package com.newyork.sharespace.services.workspace
 
 import com.newyork.sharespace.api.dto.AddWorkspaceRequest
+import com.newyork.sharespace.api.dto.workspace.WorkspaceSearchRequest
 import com.newyork.sharespace.api.dto.workspace.toWorkspaceEntity
 import com.newyork.sharespace.repository.WorkspaceRepository
 import com.newyork.sharespace.services.entity.Workspace
@@ -44,12 +45,49 @@ class WorkspaceService(private val workspaceRepository: WorkspaceRepository) {
         val workspaceEntity = request.toWorkspaceEntity()
         return workspaceRepository.save(workspaceEntity)
     }
+
     fun deleteWorkspace(id: UUID) {
         if (!workspaceRepository.existsById(id)) {
             throw NoSuchElementException("Workspace with ID $id not found")
         }
         workspaceRepository.deleteById(id)
     }
+
+    fun searchWorkspaces(request: WorkspaceSearchRequest, pageable: Pageable): Page<Workspace> {
+        val allWorkspaces = workspaceRepository.findAll().asSequence()
+            .filterByKeyword(request.keyword)
+            .filterByPrice(request.minPrice, request.maxPrice)
+            .filterByRating(request.minRating)
+            .filterByServices(request.services?.toList())
+            .toList()
+
+        return paginate(allWorkspaces, pageable)
+    }
+
+
+    private fun Sequence<Workspace>.filterByKeyword(keyword: String?): Sequence<Workspace> =
+        if (keyword.isNullOrBlank()) this
+        else this.filter { workspace ->
+            workspace.title.contains(keyword, ignoreCase = true) ||
+                    workspace.description.contains(keyword, ignoreCase = true) ||
+                    workspace.location.contains(keyword, ignoreCase = true)
+        }
+
+    private fun Sequence<Workspace>.filterByPrice(minPrice: Double?, maxPrice: Double?): Sequence<Workspace> =
+        this.filter { workspace ->
+            (minPrice?.let { workspace.price >= it } ?: true) &&
+                    (maxPrice?.let { workspace.price <= it } ?: true)
+        }
+
+    private fun Sequence<Workspace>.filterByRating(minRating: Double?): Sequence<Workspace> =
+        if (minRating == null) this
+        else this.filter { (it.rating ?: 0.0) >= minRating }
+
+    private fun Sequence<Workspace>.filterByServices(services: List<String>?): Sequence<Workspace> =
+        if (services.isNullOrEmpty()) this
+        else this.filter { workspace ->
+            workspace.amenities.map { it.name }.containsAll(services)
+        }
 
 
     private companion object {

@@ -28,6 +28,8 @@ data class User(
     val imageUrl: String?,
     @Column(nullable = true)
     val bio: String?,
+    @Column(name = "fcm_token", nullable = true)
+    val fcmToken: String? = null
 )
 enum class Gender {
     MALE, FEMALE
