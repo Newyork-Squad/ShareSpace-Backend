@@ -26,6 +26,7 @@ class SecurityConfig(
 
     private val PUBLIC_ENDPOINTS = arrayOf(
         "/api/auth/**",
+        "/api/payments/token"
     )
 
     @Bean
